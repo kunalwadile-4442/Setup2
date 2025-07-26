@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     forgotPassword,
+  getAllUsers,
   loginUser,
   logoutUser,
   registerUser,
@@ -34,5 +35,6 @@ router.route("/update-password").patch(jwtVerify, updateUserPassword);
 router.route("/forgot-password").post(forgotPassword); 
 router.route("/verify-otp").post(verifyOtp); 
 router.route("/reset-password").post(resetPassword); 
+router.route("/users").get(getAllUsers);
 
 export default router;

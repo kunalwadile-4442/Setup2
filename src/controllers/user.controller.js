@@ -6,6 +6,8 @@ import { MESSAGES } from "../constants.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { generateOtpTemplate } from "../constants.js";
+import { aggregatePaginateHelper } from "../utils/aggregatePaginateHelper.js";
+
 
 
 export const generateAccessAndRefreshTokens = async (userId) => {
@@ -310,6 +312,38 @@ const resetPassword = asyncHandler(async(req,res)=>{
   );
 })
 
+const getAllUsers = asyncHandler(async(req,res)=>{
+  
 
-export {registerUser, loginUser,logoutUser, updateUserProfile,updateUserPassword, forgotPassword, verifyOtp,resetPassword}
+  const pipeline = [
+  { $match: { role: "user" } },
+  {
+    $project: {
+      fullName: 1,
+      email: 1,
+      username: 1,
+      role: 1,
+      isLogin: 1,
+      profilePicture: 1
+    }
+  }
+];
+
+const response = await aggregatePaginateHelper(User, pipeline, req, "Users fetched successfully");
+  
+  const totalUsers = pipeline.length;
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { users: response, totalCount: totalUsers },
+        MESSAGES.USERS_FETCHED_SUCCESSFULLY
+      )
+    );
+})
+
+
+export {registerUser, loginUser,logoutUser, updateUserProfile,updateUserPassword, forgotPassword, verifyOtp ,resetPassword, getAllUsers}
 
