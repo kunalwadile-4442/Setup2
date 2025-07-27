@@ -31,12 +31,14 @@ app.use(express.static("public"));
 
 // routes
 import userRouter from "./routes/user.routes.js"
+import authRouter from "./routes/auth.routes.js";
 import { errorHandler } from "./utils/apiHandler.js";
 
 
 // routes delecration 
-app.use("/api/v1/auth", userRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/users" ,userRouter)
 
 
-app.use(errorHandler);
+app.use(errorHandler); 
 export default app;

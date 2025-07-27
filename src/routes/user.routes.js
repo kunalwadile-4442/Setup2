@@ -1,25 +1,11 @@
 import { Router } from "express";
-import {
-    forgotPassword,
-  getAllUsers,
-  loginUser,
-  logoutUser,
-  registerUser,
-  resetPassword,
-  updateUserPassword,
-  updateUserProfile,
-  verifyOtp,
-} from "../controllers/user.controller.js";
 import {jwtVerify} from  "../middlewares/auth.middleware.js"
 import { upload } from "../middlewares/multer.middleware.js"
+import { updateUserPassword, updateUserProfile ,getAllUsers, getUserProfile} from "../controllers/user.controller.js";
+import { verifyRole } from "../middlewares/roleVerify.middleware.js";
 
 
 const router = Router();
-
-router.route("/register").post(registerUser);
-router.route("/login").post(loginUser);
-router.route("/logout").post(jwtVerify,logoutUser);
-
 
 //  Frontend pending apis 
 router.route("/update-profile").patch(
@@ -31,10 +17,7 @@ router.route("/update-profile").patch(
 );
 // Passsword update route
 router.route("/update-password").patch(jwtVerify, updateUserPassword);
-
-router.route("/forgot-password").post(forgotPassword); 
-router.route("/verify-otp").post(verifyOtp); 
-router.route("/reset-password").post(resetPassword); 
-router.route("/users").get(getAllUsers);
+router.get("/", jwtVerify, verifyRole(["admin"]), getAllUsers);
+router.get("/profile", jwtVerify, getUserProfile);
 
 export default router;

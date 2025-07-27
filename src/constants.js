@@ -20,6 +20,7 @@ export const MESSAGES = {
   OTP_VERIFIED_SUCCESSFULLY: "OTP verified successfully",
   RESET_OTP_SENT_SUCCESSFULLY: "OTP sent successfully",
   USERS_FETCHED_SUCCESSFULLY: "Users fetched successfully",
+  PROFILE_FETCHED_SUCCESSFULLY: "Profile fetched successfully",
 };
 
 
