@@ -31,6 +31,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   user.fullName = fullName;
   user.email = email.toLowerCase();
 
+  
   await user.save();
 
   res.status(200).json(
