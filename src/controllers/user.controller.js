@@ -15,28 +15,26 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, MESSAGES.REQUIRED_FIELDS_MISSING);
   }
 
-  const profilePictureLocalPath = req.files?.profilePicture?.[0]?.path; // ✅ Correct key
+  let profilePictureUrl;
 
-  let profilePictureUrl = user.profilePicture; // keep old image if not provided
-
-  if (profilePictureLocalPath) {
+  // ✅ Upload only if file exists
+  if (req.files?.profilePicture?.[0]?.path) {
+    const profilePictureLocalPath = req.files.profilePicture[0].path;
     profilePictureUrl = await uploadOnCloudinary(profilePictureLocalPath, "auto");
+
     if (!profilePictureUrl) {
       throw new ApiError(500, MESSAGES.CLOUDINARY_UPLOAD_FAILED);
     }
+    user.profilePicture = profilePictureUrl.url; // ✅ Update only when new image is uploaded
   }
-
+  // ✅ Always update name and email
   user.fullName = fullName;
   user.email = email.toLowerCase();
-  user.profilePicture = profilePictureUrl.url;
+
   await user.save();
 
   res.status(200).json(
-    new ApiResponse(
-      200,
-      { user },
-      MESSAGES.PROFILE_UPDATED_SUCCESSFULLY
-    )
+    new ApiResponse(200, { user }, MESSAGES.PROFILE_UPDATED_SUCCESSFULLY)
   );
 });
 
@@ -54,7 +52,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   res.status(200).json(
     new ApiResponse(
       200,
-      { user: sanitarizedUser },
+      { user:sanitarizedUser},
       MESSAGES.PROFILE_FETCHED_SUCCESSFULLY
     )
   );
