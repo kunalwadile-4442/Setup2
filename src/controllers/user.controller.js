@@ -91,38 +91,25 @@ const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
 });
 
-const getAllUsers = asyncHandler(async(req,res)=>{
-  
+const getAllUsers = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, search = "" } = req.body || {};
+  const matchQuery = { role: "user" };
 
-  const pipeline = [
-  { $match: { role: "user" } },
-  {
-    $project: {
-      fullName: 1,
-      email: 1,
-      username: 1,
-      role: 1,
-      isLogin: 1,
-      profilePicture: 1
-    }
+  if (search) {
+    matchQuery.$or = [
+      { fullName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { username: { $regex: search, $options: "i" } },
+    ];
   }
-];
 
-const response = await aggregatePaginateHelper(User, pipeline, req, "Users fetched successfully");
-  
-  const totalUsers = pipeline.length;
+  const response = await aggregatePaginateHelper(User, matchQuery, page, limit);
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { users: response, totalCount: totalUsers },
-        MESSAGES.USERS_FETCHED_SUCCESSFULLY
-      )
-    );
-})
+  res.status(200).json(
+    new ApiResponse(200, response, "Users fetched successfully")
+  );
+});
+
 
 
 export { getAllUsers, updateUserPassword, updateUserProfile ,getUserProfile};
-

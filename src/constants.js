@@ -1,4 +1,3 @@
-
 export const MESSAGES = {
   // Auth & Credentials
   LOGIN_SUCCESSFUL: "User login successful",

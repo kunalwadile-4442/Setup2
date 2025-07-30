@@ -1,36 +1,30 @@
 {
-  "name": "nodejs_developer_journey",
+  "name": "my-backend-project",
   "version": "1.0.0",
-  "description": "new project",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
+  "private": true,
+   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed": "node src/seed.js"
   },
-  "keywords": [
-    "node",
-    "javascript"
-  ],
-  "author": "Kunal Wadile",
-  "license": "ISC",
-  "devDependencies": {
-    "nodemon": "^3.1.10",
-    "prettier": "^3.6.0"
-  },
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cloudinary": "^2.7.0",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.0",
-    "mongoose-aggregate-paginate-v2": "^1.1.4",
-    "multer": "^2.0.1",
-    "node-fetch": "^3.3.2",
-    "nodemailer": "^7.0.4"
+    "bcryptjs": "latest",
+    "cloudinary": "latest",
+    "cookie-parser": "latest",
+    "cors": "latest",
+    "date-fns": "4.1.0",
+    "dotenv": "latest",
+    "express": "latest",
+    "fs": "latest",
+    "http": "latest",
+    "jsonwebtoken": "latest",
+    "mongoose": "latest",
+    "mongoose-aggregate-paginate-v2": "latest",
+    "multer": "latest",
+    "nodemailer": "latest",
+    "socket.io": "latest"
+  },
+  "devDependencies": {
+    "nodemon": "latest"
   }
 }
