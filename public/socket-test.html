@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socket.IO API Tester</title>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+        background: #f5f7fa;
+        color: #333;
+    }
+
+    header {
+        background: #222;
+        color: #fff;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    .status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    .connected { background: #d4edda; color: #155724; }
+    .disconnected { background: #f8d7da; color: #721c24; }
+
+    .container {
+        max-width: 1400px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+
+    .api-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 4px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+        margin: 5px 5px 5px 0;
+    }
+    .button:hover { background: #0056b3; }
+    .danger { background: #dc3545; }
+    .danger:hover { background: #c82333; }
+
+    .input {
+        padding: 7px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 10px;
+    }
+    .inputtoken {
+        padding: 7px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 10px;
+        margin-right: 20px;
+    }
+
+    .output {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        max-height: 250px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+
+    @media (max-width: 600px) {
+        header h1 { font-size: 1rem; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🔌 Socket.IO API Tester</h1>
+    <div id="connectionStatus" class="status disconnected">Disconnected</div>
+</header>
+
+<div class="container">
+
+    <!-- Connection Controls -->
+    <div class="section">
+        <h2>Connection</h2>
+        <input type="text" id="tokenInput" class="inputtoken" placeholder="Enter JWT Token">
+        <button onclick="connect()" class="button">Connect</button>
+        <button onclick="disconnect()" class="button danger">Disconnect</button>
+    </div>
+
+    <!-- API Sections -->
+    <div class="api-grid">
+        <!-- User Actions -->
+        <div class="section">
+            <h2>👤 User Actions</h2>
+            <button onclick="getUserProfile()" class="button">Get Profile</button>
+            <button onclick="addProduct()" class="button">Add Product</button>
+            <button onclick="getProducts()" class="button">Get All Products</button>
+            <button onclick="updateProducts('6898d4c547ad604a030c80bb')" class="button">Update Product</button>
+            <button onclick="deleteProducts('6898e08bc25ef02c78f33ce1')" class="button danger">Delete Product</button>
+            <div id="userOutput" class="output"></div>
+        </div>
+
+        <!-- Admin Actions -->
+        <div class="section">
+            <h2>👑 Admin Actions</h2>
+            <input type="number" id="pageInput" class="input" placeholder="Page" value="1">
+            <input type="number" id="limitInput" class="input" placeholder="Limit" value="10">
+            <input type="text" id="searchInput" class="input" placeholder="Search users">
+            <button onclick="getAllUsers()" class="button">Get All Users</button>
+            <button onclick="monitorUsers()" class="button">Monitor System</button>
+            <button onclick="broadcastMessage()" class="button">Broadcast Message</button>
+            <div id="adminOutput" class="output"></div>
+        </div>
+    </div>
+
+    <!-- Real-time Events -->
+    <div class="section">
+        <h2>📡 Real-time Events</h2>
+        <div id="eventsOutput" class="output"></div>
+    </div>
+
+</div>
+
+
+
+        <script>
+        let socket = null;
+
+        function connect() {
+            const token = document.getElementById('tokenInput').value;
+            if (!token) {
+                alert('Please enter JWT token');
+                return;
+            }
+
+            socket = io('http://localhost:8000', {
+                auth: { token },
+                reconnectionAttempts: 3,
+                reconnectionDelay: 2000
+            });
+
+            socket.on('connect', () => {
+                updateConnectionStatus(true);
+                addToOutput('eventsOutput', '✅ Connected to server');
+                console.log('🔌 Socket connected with ID:', socket.id);
+            });
+
+            socket.on('disconnect', (reason) => {
+                updateConnectionStatus(false);
+                addToOutput('eventsOutput', `❌ Disconnected: ${reason}`);
+            });
+
+            socket.on('connect_error', (error) => {
+                updateConnectionStatus(false);
+                addToOutput('eventsOutput', `🚨 Connection Error: ${error.message}`);
+            });
+
+            // Listen for real-time events
+            socket.on('notification', (data) => {
+                addToOutput('eventsOutput', `📢 Notification: ${JSON.stringify(data, null, 2)}`);
+            });
+
+            socket.on('user:statusChanged', (data) => {
+                addToOutput('eventsOutput', `👤 User Status Changed: ${JSON.stringify(data, null, 2)}`);
+            });
+
+            socket.on('user:deleted', (data) => {
+                addToOutput('eventsOutput', `🗑️ User Deleted: ${JSON.stringify(data, null, 2)}`);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'status connected';
+            } else {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'status disconnected';
+            }
+        }
+
+        function addToOutput(elementId, message) {
+            const output = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // User Actions
+        function getUserProfile() {
+            if (!socket) return alert('Not connected');
+            socket.emit('user:getProfile', (response) => {
+                addToOutput('userOutput', `Get Profile Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function addProduct() {
+            if (!socket) return alert('Not connected');
+            
+            // Dummy product data
+            const productData = {
+                name: "Test Product " + Math.floor(Math.random() * 1000),
+                description: "This is a dummy product for testing",
+                price: 199.99,
+                category: "Electronics",
+                subcategory: "Gadgets",
+                quantity: 10,
+                imageUrl: "https://via.placeholder.com/150"
+            };
+
+            console.log("📦 Sending Product Data:", productData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('product:add', { productData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('userOutput', `Add Product Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getProducts(){
+           console.log("📦 Sending Get Products Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Products Request:", page, limit, search);
+            socket.emit('product:get', { page, limit, search }, (response) => {
+                addToOutput('userOutput', `Get All Products Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function updateProducts(productId){
+
+        if (!socket) return alert('Not connected');
+           
+            // Dummy product data
+            const productData = {
+                name: "Test Product 159",
+                description: "This is a dummy product is now update",
+                price: 2222.99,
+                category: "Electronics update",
+                subcategory: "Gadgets update",
+                quantity: 120,
+                imageUrl: "https://via.placeholder.com/150"
+            };
+
+            console.log("📦 Sending Updated Data:", productData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('product:update', {productId, productData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('userOutput', `Update Product Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function deleteProducts(productId){
+
+        if (!socket) return alert('Not connected');
+        
+            // Send the data in the format your backend expects
+            socket.emit('product:delete', {productId}, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('userOutput', ` Delete Product Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+         // Admin Actions
+        function getAllUsers() {
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            socket.emit('admin:getAllUsers', { page, limit, search }, (response) => {
+                addToOutput('adminOutput', `Get All Users Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function monitorUsers() {
+            if (!socket) return alert('Not connected');
+            socket.emit('admin:monitorUsers', (response) => {
+                addToOutput('adminOutput', `Monitor Users Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function broadcastMessage() {
+            if (!socket) return alert('Not connected');
+            const message = prompt('Enter broadcast message:');
+            const type = prompt('Enter message type (info/warning/error):', 'info');
+            if (message) {
+                socket.emit('admin:broadcast', { message, type }, (response) => {
+                    addToOutput('adminOutput', `Broadcast Response: ${JSON.stringify(response, null, 2)}`);
+                });
+            }
+        }
+    </script>
+    </body>
+</html>
