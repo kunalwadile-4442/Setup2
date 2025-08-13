@@ -54,9 +54,6 @@ function checkUser(action) {
     "profile:write",
     
      "product:read",
-    "product:create",
-    "product:update",
-    "product:delete",
   ]
 
   console.log("🔐 User checking action:", action, "Allowed:", allowed.includes(action))

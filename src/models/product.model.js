@@ -17,13 +17,10 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product price is required"],
       min: [0, "Price must be a positive number"],
     },
-    category: {
-      type: String,
-      required: [true, "Product category is required"],
-    },
-    subcategory: {
-      type: String,
-    },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+    
+    subcategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Subcategory" },
+
     quantity: {
       type: Number,
       default: 0,
@@ -43,6 +40,11 @@ const productSchema = new mongoose.Schema(
     timestamps: true, 
   }
 );
+
+productSchema.index({ name: "text" });
+productSchema.index({ categoryId: 1 });
+productSchema.index({ subcategoryId: 1 });
+
 productSchema.plugin(aggregatePaginate);
 
 const Product = mongoose.model("Product", productSchema);

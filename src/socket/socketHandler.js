@@ -11,8 +11,8 @@ export const initializeSocket = (io) => {
 
   // Define handler arrays
   
-  const commonHandlers = [userSocketHandlers, productSocketHandlers]
-  const adminHandlers = [adminSocketHandlers] // you can add more here if needed
+  const commonHandlers = [userSocketHandlers]
+  const adminHandlers = [adminSocketHandlers, productSocketHandlers] // you can add more here if needed
 
   io.on("connection", (socket) => {
     connectedUsers++
