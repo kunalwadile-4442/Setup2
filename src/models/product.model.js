@@ -19,8 +19,6 @@ const productSchema = new mongoose.Schema(
     },
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     
-    subcategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Subcategory" },
-
     quantity: {
       type: Number,
       default: 0,
@@ -43,7 +41,6 @@ const productSchema = new mongoose.Schema(
 
 productSchema.index({ name: "text" });
 productSchema.index({ categoryId: 1 });
-productSchema.index({ subcategoryId: 1 });
 
 productSchema.plugin(aggregatePaginate);
 

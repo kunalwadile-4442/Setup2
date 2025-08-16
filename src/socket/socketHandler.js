@@ -2,6 +2,7 @@ import { socketAuth } from "./middlewares/socketAuth.js"
 import { userSocketHandlers } from "./handlers/userHandlers.js"
 import { adminSocketHandlers } from "./handlers/adminHandlers.js"
 import { productSocketHandlers } from "./handlers/productHandler.js"
+import { categorySocketHandlers } from "./handlers/categoryHandler.js"
 
 export const initializeSocket = (io) => {
   let connectedUsers = 0
@@ -11,8 +12,8 @@ export const initializeSocket = (io) => {
 
   // Define handler arrays
   
-  const commonHandlers = [userSocketHandlers]
-  const adminHandlers = [adminSocketHandlers, productSocketHandlers] // you can add more here if needed
+  const commonHandlers = [userSocketHandlers,productSocketHandlers,categorySocketHandlers]
+  const adminHandlers = [adminSocketHandlers, productSocketHandlers, categorySocketHandlers] // you can add more here if needed
 
   io.on("connection", (socket) => {
     connectedUsers++

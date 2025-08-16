@@ -33,6 +33,11 @@ function checkAdmin(action) {
     "product:create",
     "product:update",
     "product:delete",
+
+    "category:read",
+    "category:create",
+    "category:update",
+    "category:delete",
   ]
 
   console.log("🔐 Admin checking action:", action, "Allowed:", allowed.includes(action))
@@ -52,8 +57,8 @@ function checkUser(action) {
   const allowed = [
     "profile:read",
     "profile:write",
-    
      "product:read",
+    "category:read",
   ]
 
   console.log("🔐 User checking action:", action, "Allowed:", allowed.includes(action))

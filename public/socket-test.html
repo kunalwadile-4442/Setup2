@@ -138,10 +138,9 @@
         <div class="section">
             <h2>👤 User Actions</h2>
             <button onclick="getUserProfile()" class="button">Get Profile</button>
-            <button onclick="addProduct()" class="button">Add Product</button>
-            <button onclick="getProducts()" class="button">Get All Products</button>
-            <button onclick="updateProducts('6898d4c547ad604a030c80bb')" class="button">Update Product</button>
-            <button onclick="deleteProducts('6898e08bc25ef02c78f33ce1')" class="button danger">Delete Product</button>
+            <button onclick="getProductsUser()" class="button">Get Products</button>
+            <button onclick="getCategoryUser()" class="button">Get Category</button>
+           
             <div id="userOutput" class="output"></div>
         </div>
 
@@ -154,6 +153,15 @@
             <button onclick="getAllUsers()" class="button">Get All Users</button>
             <button onclick="monitorUsers()" class="button">Monitor System</button>
             <button onclick="broadcastMessage()" class="button">Broadcast Message</button>
+             <button onclick="addProduct()" class="button">Add Product</button>
+            <button onclick="getProducts()" class="button">Get All Products</button>
+            <button onclick="updateProducts('6898d4c547ad604a030c80bb')" class="button">Update Product</button>
+            <button onclick="deleteProducts('6898e08bc25ef02c78f33ce1')" class="button danger">Delete Product</button>
+
+            <button onclick="addCategory()" class="button">Add Category</button>
+            <button onclick="getCategory()" class="button">Get Category</button>
+            <button onclick="updateCategory('68a0bebaf8d415b2fd321e80')" class="button">update Category</button>
+
             <div id="adminOutput" class="output"></div>
         </div>
     </div>
@@ -250,13 +258,11 @@
         function addProduct() {
             if (!socket) return alert('Not connected');
             
-            // Dummy product data
             const productData = {
                 name: "Test Product " + Math.floor(Math.random() * 1000),
                 description: "This is a dummy product for testing",
                 price: 199.99,
-                category: "Electronics",
-                subcategory: "Gadgets",
+                categoryId: "68a0bebaf8d415b2fd321e80", 
                 quantity: 10,
                 imageUrl: "https://via.placeholder.com/150"
             };
@@ -266,11 +272,23 @@
             // Send the data in the format your backend expects
             socket.emit('product:add', { productData }, (response) => {
                 console.log("📩 RAW RESPONSE:", response);
-                addToOutput('userOutput', `Add Product Response: ${JSON.stringify(response, null, 2)}`);
+                addToOutput('adminOutput', `Add Product Response: ${JSON.stringify(response, null, 2)}`);
             });
         }
 
         function getProducts(){
+           console.log("📦 Sending Get Products Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Products Request:", page, limit, search);
+            socket.emit('product:get', { page, limit, search }, (response) => {
+                addToOutput('adminOutput', `Get All Products Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function getProductsUser(){
            console.log("📦 Sending Get Products Request");
             if (!socket) return alert('Not connected');
             const page = parseInt(document.getElementById('pageInput').value) || 1;
@@ -303,7 +321,7 @@
             // Send the data in the format your backend expects
             socket.emit('product:update', {productId, productData }, (response) => {
                 console.log("📩 RAW RESPONSE:", response);
-                addToOutput('userOutput', `Update Product Response: ${JSON.stringify(response, null, 2)}`);
+                addToOutput('adminOutput', `Update Product Response: ${JSON.stringify(response, null, 2)}`);
             });
         }
         function deleteProducts(productId){
@@ -313,7 +331,7 @@
             // Send the data in the format your backend expects
             socket.emit('product:delete', {productId}, (response) => {
                 console.log("📩 RAW RESPONSE:", response);
-                addToOutput('userOutput', ` Delete Product Response: ${JSON.stringify(response, null, 2)}`);
+                addToOutput('adminOutput', ` Delete Product Response: ${JSON.stringify(response, null, 2)}`);
             });
         }
          // Admin Actions
@@ -345,6 +363,68 @@
                 });
             }
         }
+
+        <!-- Category -->
+        function addCategory() {
+            if (!socket) return alert('Not connected');
+            // Dummy Category data
+            const categoryData = {
+                name: "Electronics",
+                description: "This is Electronic items",
+            }
+            console.log("📦 Sending category Data :", categoryData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('category:add', { categoryData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', `Add category Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getCategory(){
+           console.log("📦 Sending Get Category Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Category Request:", page, limit, search);
+            socket.emit('category:get', { page, limit, search }, (response) => {
+                addToOutput('adminOutput', `Get All Products Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function getCategoryUser(){
+           console.log("📦 Sending Get Category Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Category Request:", page, limit, search);
+            socket.emit('category:get', { page, limit, search }, (response) => {
+                addToOutput('userOutput', `Get All  Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function updateCategory(categoryId){
+
+        if (!socket) return alert('Not connected');
+           
+            // Dummy product data
+            const categoryData = {
+                name: "Electronics",
+                description: "Electronics category updated description",
+            };
+
+            console.log("📦 Sending Updated Data:", categoryData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('category:update', {categoryId, categoryData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', `Update category Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+
     </script>
     </body>
 </html>

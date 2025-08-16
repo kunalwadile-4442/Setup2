@@ -22,19 +22,18 @@ export const productSocketHandlers = (socket, io) => {
 
       const productInfo = data.productData ?? data;
 
-      const { name, description, price, category, subcategory, quantity, imageUrl } = productInfo;
+      const { name, description, price, categoryId, quantity, imageUrl } = productInfo;
 
-      if (!name || !description || !price || !category || !imageUrl) {
+      if (!name || !description || !price || !categoryId || !imageUrl) {
         console.log("⚠️ Validation failed - missing required fields");
-        return sendError(callback, "All required fields must be provided", "VALIDATION_ERROR");
+        return sendError(callback, "All required fields must be provided", "404");
       }
 
       const product = await Product.create({
         name,
         description,
         price: Number(price),
-        category,
-        subcategory,
+        categoryId,
         quantity: Number(quantity ?? 0),
         imageUrl,
         createdBy: socket.user._id,
@@ -78,7 +77,7 @@ export const productSocketHandlers = (socket, io) => {
 
       if (!name || !description || !price || !category || !imageUrl) {
         console.log("⚠️ Validation failed - missing required fields");
-        return sendError(callback, "All required fields must be provided", "VALIDATION_ERROR");
+        return sendError(callback, "All required fields must be provided", "404");
       }
 
       product.name = name;
@@ -144,15 +143,6 @@ export const productSocketHandlers = (socket, io) => {
       
   socket.on("product:get", asyncHandler(async (data, callback) => {
     try {
-      if (!socket.user) {
-        return sendError(callback, "User not authenticated", "NO_USER");
-      }
-
-      const permission = await checkPermission(socket, "product:read");
-      if (!permission.success) {
-        return sendError(callback, permission.message, permission.error);
-      }
-
       const { page = 1, limit = 10, search = "" } = data || {};
 
       // Match query for search
@@ -174,5 +164,19 @@ export const productSocketHandlers = (socket, io) => {
     }
   }));
 
+  socket.on("product:getById", asyncHandler(async (data, callback) => {
+    try {
+      const { productId } = data;
+      const product = await Product.findById(productId);
+      if (!product) {
+        return sendError(callback, "Product not found", "404");
+      }
+      return sendSuccess(callback, product, "Product fetched successfully");
+    } catch (error) {
+      console.error("💥 Error in product:getById handler:", error);
+      return sendError(callback, error.message, error.name);
+    }
+  }));
 
-};
+  
+}
