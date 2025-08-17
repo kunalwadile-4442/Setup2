@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REST API + Socket.IO Tester</title>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+        background: #f5f7fa;
+        color: #333;
+    }
+
+    header {
+        background: #222;
+        color: #fff;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    .connected { background: #d4edda; color: #155724; }
+    .disconnected { background: #f8d7da; color: #721c24; }
+    .logged-in { background: #d1ecf1; color: #0c5460; }
+
+    .role-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    .role-admin { background: #f8d7da; color: #721c24; }
+    .role-user { background: #d4edda; color: #155724; }
+
+    .container {
+        max-width: 1400px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .login-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .login-section h2 {
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .login-form {
+        display: grid;
+        gap: 15px;
+        max-width: 400px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    h2 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+
+    .api-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 4px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+        margin: 5px 5px 5px 0;
+    }
+    .button:hover { background: #0056b3; }
+    .button:disabled { background: #6c757d; cursor: not-allowed; }
+    .danger { background: #dc3545; }
+    .danger:hover { background: #c82333; }
+    .success { background: #28a745; }
+    .success:hover { background: #218838; }
+
+    .input {
+        padding: 7px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 10px;
+    }
+    .inputtoken {
+        padding: 7px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 10px;
+        margin-right: 20px;
+    }
+
+    .login-section .input {
+        background: rgba(255,255,255,0.9);
+        border: 1px solid rgba(255,255,255,0.3);
+        max-width: 100%;
+    }
+
+    .output {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        max-height: 250px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+
+    .access-denied {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .quick-login {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+
+    .user-profile {
+        background: #e9ecef;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+        header h1 { font-size: 1rem; }
+        .user-info { flex-direction: column; gap: 5px; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🔐 REST API + Socket.IO Tester</h1>
+    <div class="user-info">
+        <div id="userProfile" style="display: none;">
+            <span id="userName"></span>
+            <span id="userRole" class="role-badge"></span>
+        </div>
+        <div id="connectionStatus" class="status disconnected">Disconnected</div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Added REST API Login Section -->
+    <div class="section login-section">
+        <h2>🔐 REST API Login</h2>
+        <div class="login-form">
+            <div class="form-group">
+                <label for="emailInput">Email:</label>
+                <input type="email" id="emailInput" class="input" value="deveshwadile01@gmail.com" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label for="passwordInput">Password:</label>
+                <input type="text" id="passwordInput" class="input" value="NS@1234" placeholder="Enter password">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="logout()" class="button danger">🚪 Logout</button>
+            </div>
+            <div class="quick-login">
+                <button onclick="quickLogin('admin')" class="button" style="background: #dc3545;">👑 Quick Admin Login</button>
+                <button onclick="quickLogin('user')" class="button" style="background: #28a745;">👤 Quick User Login</button>
+            </div>
+        </div>
+        <div id="loginOutput" class="output" style="margin-top: 15px; background: rgba(255,255,255,0.1); color: white; max-height: 150px;"></div>
+    </div>
+
+    <!-- Enhanced Connection Controls with role-based access -->
+    <div class="section">
+        <h2>Socket.IO Connection</h2>
+        <div id="userProfileDisplay" class="user-profile" style="display: none;"></div>
+        <input type="text" id="tokenInput" class="inputtoken" placeholder="JWT Token (auto-filled after login)" readonly>
+        <button onclick="connect()" class="button">Connect to Socket</button>
+        <button onclick="disconnect()" class="button danger">Disconnect</button>
+    </div>
+
+    <!-- Role-based API Sections -->
+    <div class="api-grid">
+        <!-- User Actions -->
+        <div class="section" id="userSection">
+            <h2>👤 User Actions <span class="role-badge role-user">User Access</span></h2>
+            <div id="userAccessContent">
+                <button onclick="getUserProfile()" class="button">Get Profile</button>
+                <button onclick="getProductsUser()" class="button">Get Products</button>
+                <button onclick="addToCart()" class="button">Add/Update Cart</button>
+                <button onclick="getCart()" class="button">Get Cart</button>
+                <button onclick="getCategoryUser()" class="button">Get Categories</button>
+            </div>
+            <div id="userOutput" class="output"></div>
+        </div>
+
+        <!-- Admin Actions -->
+        <div class="section" id="adminSection">
+            <h2>👑 Admin Actions <span class="role-badge role-admin">Admin Only</span></h2>
+            <div id="adminAccessContent">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                    <input type="number" id="pageInput" class="input" placeholder="Page" value="1">
+                    <input type="number" id="limitInput" class="input" placeholder="Limit" value="10">
+                    <input type="text" id="searchInput" class="input" placeholder="Search">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong>👥 User Management:</strong><br>
+                    <button onclick="getAllUsers()" class="button">Get All Users</button>
+                    <button onclick="monitorUsers()" class="button">Monitor System</button>
+                    <button onclick="broadcastMessage()" class="button">Broadcast Message</button>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <strong>📦 Product Management:</strong><br>
+                    <button onclick="addProduct()" class="button">Add Product</button>
+                    <button onclick="getProducts()" class="button">Get All Products</button>
+                    <button onclick="updateProducts('68a0d142d60b3609b5f03577')" class="button">Update Product</button>
+                    <button onclick="deleteProducts('6898e08bc25ef02c78f33ce1')" class="button danger">Delete Product</button>
+                </div>
+
+                <div>
+                    <strong>📂 Category Management:</strong><br>
+                    <button onclick="addCategory()" class="button">Add Category</button>
+                    <button onclick="getCategory()" class="button">Get Category</button>
+                    <button onclick="updateCategory('68a0bebaf8d415b2fd321e80')" class="button">Update Category</button>
+                    <button onclick="deleteCategory('68a0bebaf8d415b2fd321e80')" class="button danger">Delete Category</button>
+                </div>
+            </div>
+            <div id="adminOutput" class="output"></div>
+        </div>
+    </div>
+
+    <!-- Real-time Events -->
+    <div class="section">
+        <h2>📡 Real-time Events</h2>
+        <div id="eventsOutput" class="output"></div>
+    </div>
+
+</div>
+
+<script>
+        let socket = null;
+        let currentUser = null;
+        let authToken = null;
+
+        async function loginWithAPI() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            try {
+                addToOutput('loginOutput', '🔄 Attempting login...');
+                
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.data.user;
+                    authToken = data.data.accessToken;
+                    
+                    // Auto-fill token input
+                    document.getElementById('tokenInput').value = authToken;
+                    
+                    updateUserInterface();
+                    addToOutput('loginOutput', `✅ Login successful!\nRole: ${currentUser.role}\nUser: ${currentUser.fullName}`);
+                    
+                    // Store in localStorage for persistence
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                } else {
+                    addToOutput('loginOutput', `❌ Login failed: ${data.message}`);
+                }
+            } catch (error) {
+                addToOutput('loginOutput', `🚨 Login error: ${error.message}`);
+            }
+        }
+
+        function quickLogin(role) {
+            if (role === 'admin') {
+                document.getElementById('emailInput').value = 'kunal@gmail.com';
+                document.getElementById('passwordInput').value = 'Kunal@123';
+            } else {
+                document.getElementById('emailInput').value = 'deveshwadile01@gmail.com';
+                document.getElementById('passwordInput').value = 'NS@1234';
+            }
+            loginWithAPI();
+        }
+
+        function logout() {
+            currentUser = null;
+            authToken = null;
+            document.getElementById('tokenInput').value = '';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('userRole').value = '';
+            
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+
+            
+            updateUserInterface();
+            addToOutput('loginOutput', '🚪 Logged out successfully');
+            
+            if (socket) {
+                disconnect();
+            }
+        }
+
+        function updateUserInterface() {
+            const userProfile = document.getElementById('userProfile');
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            const userProfileDisplay = document.getElementById('userProfileDisplay');
+            const adminSection = document.getElementById('adminSection');
+            const adminAccessContent = document.getElementById('adminAccessContent');
+
+            if (currentUser) {
+                // Show user info in header
+                userProfile.style.display = 'flex';
+                userName.textContent = currentUser.fullName;
+                userRole.textContent = currentUser.role;
+                userRole.className = `role-badge role-${currentUser.role}`;
+
+                // Show detailed user profile
+                userProfileDisplay.style.display = 'block';
+                userProfileDisplay.innerHTML = `
+                    <strong>👤 Logged in as:</strong> ${currentUser.fullName} (${currentUser.email})<br>
+                    <strong>🎭 Role:</strong> ${currentUser.role.toUpperCase()}<br>
+                    <strong>📅 Last Login:</strong> ${new Date(currentUser.updatedAt).toLocaleString()}
+                `;
+
+                // Role-based access control
+                if (currentUser.role === 'admin') {
+                    adminAccessContent.style.display = 'block';
+                    adminSection.querySelector('.access-denied')?.remove();
+                } else {
+                    adminAccessContent.style.display = 'none';
+                    if (!adminSection.querySelector('.access-denied')) {
+                        const accessDenied = document.createElement('div');
+                        accessDenied.className = 'access-denied';
+                        accessDenied.innerHTML = '🚫 Admin access required. Please login with admin credentials.';
+                        adminSection.appendChild(accessDenied);
+                    }
+                }
+            } else {
+                userProfile.style.display = 'none';
+                userProfileDisplay.style.display = 'none';
+                adminAccessContent.style.display = 'none';
+                
+                if (!adminSection.querySelector('.access-denied')) {
+                    const accessDenied = document.createElement('div');
+                    accessDenied.className = 'access-denied';
+                    accessDenied.innerHTML = '🔐 Please login first to access admin features.';
+                    adminSection.appendChild(accessDenied);
+                }
+            }
+        }
+
+        window.onload = function() {
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                authToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('tokenInput').value = authToken;
+                updateUserInterface();
+                addToOutput('loginOutput', '✅ Session restored from previous login');
+            } else {
+                updateUserInterface();
+            }
+        };
+
+        function connect() {
+            const token = document.getElementById('tokenInput').value;
+            if (!token) {
+                alert('Please login first or enter JWT token');
+                return;
+            }
+
+            socket = io('http://localhost:8000', {
+                auth: { token },
+                reconnectionAttempts: 3,
+                reconnectionDelay: 2000
+            });
+
+            socket.on('connect', () => {
+                updateConnectionStatus(true);
+                addToOutput('eventsOutput', '✅ Connected to server');
+                console.log('🔌 Socket connected with ID:', socket.id);
+            });
+
+            socket.on('disconnect', (reason) => {
+                updateConnectionStatus(false);
+                addToOutput('eventsOutput', `❌ Disconnected: ${reason}`);
+            });
+
+            socket.on('connect_error', (error) => {
+                updateConnectionStatus(false);
+                addToOutput('eventsOutput', `🚨 Connection Error: ${error.message}`);
+            });
+
+            // Listen for real-time events
+            socket.on('notification', (data) => {
+                addToOutput('eventsOutput', `📢 Notification: ${JSON.stringify(data, null, 2)}`);
+            });
+
+            socket.on('user:statusChanged', (data) => {
+                addToOutput('eventsOutput', `👤 User Status Changed: ${JSON.stringify(data, null, 2)}`);
+            });
+
+            socket.on('user:deleted', (data) => {
+                addToOutput('eventsOutput', `🗑️ User Deleted: ${JSON.stringify(data, null, 2)}`);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'status connected';
+            } else {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'status disconnected';
+            }
+        }
+
+        function addToOutput(elementId, message) {
+            const output = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // User Actions
+        function getUserProfile() {
+            if (!socket) return alert('Not connected');
+            socket.emit('user:getProfile', (response) => {
+                addToOutput('userOutput', `Get Profile Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function addProduct() {
+            if (!socket) return alert('Not connected');
+            
+            const productData = {
+                name: "Test Product " + Math.floor(Math.random() * 1000),
+                description: "This is a dummy product for testing",
+                price: 199.99,
+                categoryId: "68a0bebaf8d415b2fd321e80", 
+                quantity: 10,
+                imageUrl: "https://via.placeholder.com/150"
+            };
+
+            console.log("📦 Sending Product Data:", productData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('product:add', { productData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', `Add Product Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getProducts(){
+           console.log("📦 Sending Get Products Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Products Request:", page, limit, search);
+            socket.emit('product:get', { page, limit, search }, (response) => {
+                addToOutput('adminOutput', `Get All Products Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function getProductsUser(){
+           console.log("📦 Sending Get Products Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Products Request:", page, limit, search);
+            socket.emit('product:get', { page, limit, search }, (response) => {
+                addToOutput('userOutput', `Get All Products Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function updateProducts(productId){
+
+        if (!socket) return alert('Not connected');
+           
+            // Dummy product data
+            const productData = {
+                name: "Test Product 159",
+                description: "This is a dummy product is now update",
+                price: 2222.99,
+                categoryId: "68a0bebaf8d415b2fd321e80",
+                quantity: 120,
+                imageUrl: "https://via.placeholder.com/150"
+            };
+
+            console.log("📦 Sending Updated Data:", productData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('product:update', {productId, productData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', `Update Product Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function deleteProducts(productId){
+
+        if (!socket) return alert('Not connected');
+        
+            // Send the data in the format your backend expects
+            socket.emit('product:delete', {productId}, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', ` Delete Product Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+         // Admin Actions
+        function getAllUsers() {
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            socket.emit('admin:getAllUsers', { page, limit, search }, (response) => {
+                addToOutput('adminOutput', `Get All Users Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function monitorUsers() {
+            if (!socket) return alert('Not connected');
+            socket.emit('admin:monitorUsers', (response) => {
+                addToOutput('adminOutput', `Monitor Users Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function broadcastMessage() {
+            if (!socket) return alert('Not connected');
+            const message = prompt('Enter broadcast message:');
+            const type = prompt('Enter message type (info/warning/error):', 'info');
+            if (message) {
+                socket.emit('admin:broadcast', { message, type }, (response) => {
+                    addToOutput('adminOutput', `Broadcast Response: ${JSON.stringify(response, null, 2)}`);
+                });
+            }
+        }
+
+        function addCategory() {
+            if (!socket) return alert('Not connected');
+            // Dummy Category data
+            const categoryData = {
+                name: "Electronics",
+                description: "This is Electronic items",
+            }
+            console.log("📦 Sending category Data :", categoryData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('category:add', { categoryData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', `Add category Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getCategory(){
+           console.log("📦 Sending Get Category Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Category Request:", page, limit, search);
+            socket.emit('category:get', { page, limit, search }, (response) => {
+                addToOutput('adminOutput', `Get All Products Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function getCategoryUser(){
+           console.log("📦 Sending Get Category Request");
+            if (!socket) return alert('Not connected');
+            const page = parseInt(document.getElementById('pageInput').value) || 1;
+            const limit = parseInt(document.getElementById('limitInput').value) || 10;
+            const search = document.getElementById('searchInput').value;
+
+            console.log("📦 Sending Get Category Request:", page, limit, search);
+            socket.emit('category:get', { page, limit, search }, (response) => {
+                addToOutput('userOutput', `Get All  Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function updateCategory(categoryId){
+
+        if (!socket) return alert('Not connected');
+           
+            // Dummy product data
+            const categoryData = {
+                name: "Electronics",
+                description: "Electronics category updated description",
+            };
+
+            console.log("📦 Sending Updated Data:", categoryData);
+            
+            // Send the data in the format your backend expects
+            socket.emit('category:update', {categoryId, categoryData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', `Update category Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        function deleteCategory(categoryId) {
+
+        if (!socket) return alert('Not connected');
+        
+            // Send the data in the format your backend expects
+            socket.emit('category:delete', {categoryId}, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', ` Delete category Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function addToCart() {
+            
+            if (!socket) return alert('Not connected');
+
+            const cartData = {
+                productId: "68a0d281d60b3609b5f03582",
+                quantity: 1,
+            }
+            console.log("📦 Sending category Data :", cartData);
+
+            socket.emit('cart:add', { cartData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('userOutput', `Add to Cart Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getCart(){
+            if (!socket) return alert('Not connected');
+
+            socket.emit('cart:get',{}, (response) => {
+                addToOutput('userOutput', `Get Cart Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+    </script>
+    </body>
+</html>

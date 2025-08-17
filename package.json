@@ -1,6 +1,7 @@
 {
   "name": "my-backend-project",
   "version": "1.0.0",
+  "type": "module",
   "private": true,
    "scripts": {
     "dev": "nodemon src/index.js",

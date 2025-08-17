@@ -139,8 +139,8 @@
             <h2>👤 User Actions</h2>
             <button onclick="getUserProfile()" class="button">Get Profile</button>
             <button onclick="getProductsUser()" class="button">Get Products</button>
-            <button onclick="getCategoryUser()" class="button">Get Category</button>
-           
+            <button onclick="addToCart()" class="button">Add/Update Cart</button>
+            <button onclick="getCart()" class="button">Get Cart</button>
             <div id="userOutput" class="output"></div>
         </div>
 
@@ -155,7 +155,7 @@
             <button onclick="broadcastMessage()" class="button">Broadcast Message</button>
              <button onclick="addProduct()" class="button">Add Product</button>
             <button onclick="getProducts()" class="button">Get All Products</button>
-            <button onclick="updateProducts('6898d4c547ad604a030c80bb')" class="button">Update Product</button>
+            <button onclick="updateProducts('68a0d142d60b3609b5f03577')" class="button">Update Product</button>
             <button onclick="deleteProducts('6898e08bc25ef02c78f33ce1')" class="button danger">Delete Product</button>
 
             <button onclick="addCategory()" class="button">Add Category</button>
@@ -310,8 +310,7 @@
                 name: "Test Product 159",
                 description: "This is a dummy product is now update",
                 price: 2222.99,
-                category: "Electronics update",
-                subcategory: "Gadgets update",
+                categoryId: "68a0bebaf8d415b2fd321e80",
                 quantity: 120,
                 imageUrl: "https://via.placeholder.com/150"
             };
@@ -364,7 +363,6 @@
             }
         }
 
-        <!-- Category -->
         function addCategory() {
             if (!socket) return alert('Not connected');
             // Dummy Category data
@@ -423,8 +421,40 @@
                 addToOutput('adminOutput', `Update category Response: ${JSON.stringify(response, null, 2)}`);
             });
         }
+        function deleteCategory(categoryId) {
 
+        if (!socket) return alert('Not connected');
+        
+            // Send the data in the format your backend expects
+            socket.emit('category:delete', {categoryId}, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('adminOutput', ` Delete category Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
 
+        function addToCart() {
+            
+            if (!socket) return alert('Not connected');
+
+            const cartData = {
+                productId: "68a0d281d60b3609b5f03582",
+                quantity: 1,
+            }
+            console.log("📦 Sending category Data :", cartData);
+
+            socket.emit('cart:add', { cartData }, (response) => {
+                console.log("📩 RAW RESPONSE:", response);
+                addToOutput('userOutput', `Add to Cart Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getCart(){
+            if (!socket) return alert('Not connected');
+
+            socket.emit('cart:get',{}, (response) => {
+                addToOutput('userOutput', `Get Cart Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
     </script>
     </body>
 </html>

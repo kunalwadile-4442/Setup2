@@ -14,7 +14,6 @@ export const aggregatePaginateHelper = async (
         refreshToken: 0,
         resetOTP: 0,
         resetOTPExpire: 0,
-        __v: 0,
       },
     },
   ];

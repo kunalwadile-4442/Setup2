@@ -38,6 +38,11 @@ function checkAdmin(action) {
     "category:create",
     "category:update",
     "category:delete",
+
+    "cart:read",
+    "cart:create",
+    "cart:update",
+    "cart:delete",
   ]
 
   console.log("🔐 Admin checking action:", action, "Allowed:", allowed.includes(action))
@@ -59,6 +64,11 @@ function checkUser(action) {
     "profile:write",
      "product:read",
     "category:read",
+
+    "cart:read",
+    "cart:create",
+    "cart:update",
+    "cart:delete",
   ]
 
   console.log("🔐 User checking action:", action, "Allowed:", allowed.includes(action))
@@ -69,7 +79,7 @@ function checkUser(action) {
 
   return {
     success: false,
-    message: `User cannot perform '${action}'`,
+    message: `Permission denied for '${action}'`,
     error: "INSUFFICIENT_PERMISSIONS",
   }
 }
