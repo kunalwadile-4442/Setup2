@@ -81,20 +81,19 @@
     }
 
     .login-form {
-        display: grid;
-        gap: 15px;
-        max-width: 400px;
+    flex-direction: row;
+    align-items: end;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
     }
 
     .form-group {
         display: flex;
         flex-direction: column;
         gap: 5px;
-    }
-
-    .form-group label {
-        font-weight: 500;
-        font-size: 0.9rem;
+        max-width: 400px;
     }
 
     h2 {
@@ -173,7 +172,6 @@
     }
 
     .quick-login {
-        display: flex;
         gap: 10px;
         margin-top: 15px;
         flex-wrap: wrap;
@@ -190,13 +188,16 @@
     @media (max-width: 600px) {
         header h1 { font-size: 1rem; }
         .user-info { flex-direction: column; gap: 5px; }
+        .form-group { max-width: 90%; }
     }
 </style>
 </head>
 <body>
 
 <header>
-    <h1>🔐 REST API + Socket.IO Tester</h1>
+    <div>
+        <h1>🔐 REST API + Socket.IO Tester</h1>
+    </div>
     <div class="user-info">
         <div id="userProfile" style="display: none;">
             <span id="userName"></span>
@@ -211,6 +212,7 @@
     <!-- Added REST API Login Section -->
     <div class="section login-section">
         <h2>🔐 REST API Login</h2>
+      
         <div class="login-form">
             <div class="form-group">
                 <label for="emailInput">Email:</label>
@@ -220,13 +222,11 @@
                 <label for="passwordInput">Password:</label>
                 <input type="text" id="passwordInput" class="input" value="NS@1234" placeholder="Enter password">
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="logout()" class="button danger">🚪 Logout</button>
-            </div>
-            <div class="quick-login">
-                <button onclick="quickLogin('admin')" class="button" style="background: #dc3545;">👑 Quick Admin Login</button>
-                <button onclick="quickLogin('user')" class="button" style="background: #28a745;">👤 Quick User Login</button>
-            </div>
+        </div>
+        <div class="quick-login">
+             <button onclick="logout()" class="button danger" style="margin-top: 22px;">🚪 Logout</button>
+            <button onclick="quickLogin('admin')" class="button" style="background: blue;">👑 Quick Admin Login</button>
+            <button onclick="quickLogin('user')" class="button" style="background: #28a745;">👤 Quick User Login</button>
         </div>
         <div id="loginOutput" class="output" style="margin-top: 15px; background: rgba(255,255,255,0.1); color: white; max-height: 150px;"></div>
     </div>
@@ -365,8 +365,8 @@
             document.getElementById('tokenInput').value = '';
             document.getElementById('emailInput').value = '';
             document.getElementById('passwordInput').value = '';
-            document.getElementById('userName').value = '';
-            document.getElementById('userRole').value = '';
+            document.getElementById('userName').textContent = '';
+            document.getElementById('userRole').textContent = '';
             
             localStorage.removeItem('authToken');
             localStorage.removeItem('currentUser');
