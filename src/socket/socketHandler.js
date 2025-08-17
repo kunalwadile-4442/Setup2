@@ -5,6 +5,7 @@ import { productSocketHandlers } from "./handlers/productHandler.js"
 import { categorySocketHandlers } from "./handlers/categoryHandler.js"
 import { cartSocketHandlers } from "./handlers/cartHandler.js"
 import { wishlistSocketHandlers } from "./handlers/wishlistHandler.js"
+import { addressSocketHandlers } from "./handlers/addressHandler.js"
 
 export const initializeSocket = (io) => {
   let connectedUsers = 0
@@ -19,7 +20,8 @@ export const initializeSocket = (io) => {
     productSocketHandlers,
     categorySocketHandlers,
     cartSocketHandlers,
-    wishlistSocketHandlers
+    wishlistSocketHandlers,
+    addressSocketHandlers
   ];
   const adminHandlers = [adminSocketHandlers] // you can add more here if needed
 

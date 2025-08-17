@@ -1,23 +1,23 @@
 export const checkPermission = async (socket, action) => {
-  console.log("🔐 Checking permission for action:", action)
-  console.log("👤 User role:", socket.user?.role)
+  console.log("🔐 Checking permission for action:", action);
+  console.log("👤 User role:", socket.user?.role);
 
-  const role = socket.user?.role
+  const role = socket.user?.role;
 
   switch (role) {
     case "admin":
-      return checkAdmin(action)
+      return checkAdmin(action);
     case "user":
-      return checkUser(action)
+      return checkUser(action);
     default:
-      console.log("❌ Unknown role:", role)
+      console.log("❌ Unknown role:", role);
       return {
         success: false,
         message: "Unknown role",
         error: "ROLE_NOT_FOUND",
-      }
+      };
   }
-}
+};
 
 function checkAdmin(action) {
   const allowed = [
@@ -28,7 +28,7 @@ function checkAdmin(action) {
     "system:monitor",
     "profile:read",
     "profile:write",
-    
+
     "product:read",
     "product:create",
     "product:update",
@@ -47,26 +47,40 @@ function checkAdmin(action) {
 
     "wishlist:read",
 
-  ]
+    "order:read",
+    "order:create",
+    "order:update",
+    "order:delete",
 
-  console.log("🔐 Admin checking action:", action, "Allowed:", allowed.includes(action))
+    "address:read",
+    "address:create",
+    "address:update",
+    "address:delete",
+  ];
+
+  console.log(
+    "🔐 Admin checking action:",
+    action,
+    "Allowed:",
+    allowed.includes(action)
+  );
 
   if (allowed.includes(action)) {
-    return { success: true }
+    return { success: true };
   }
 
   return {
     success: false,
     message: `Admin cannot perform '${action}'`,
     error: "INSUFFICIENT_PERMISSIONS",
-  }
+  };
 }
 
 function checkUser(action) {
   const allowed = [
     "profile:read",
     "profile:write",
-     "product:read",
+    "product:read",
     "category:read",
 
     "cart:read",
@@ -79,18 +93,34 @@ function checkUser(action) {
     "wishlist:toggle",
     "wishlist:clear",
 
-    
-  ]
+    "order:read",
+    "order:create",
+    "order:update",
+    "order:delete",
 
-  console.log("🔐 User checking action:", action, "Allowed:", allowed.includes(action))
+
+    "address:read",
+    "address:create",
+    "address:update",
+    "address:delete",
+
+
+  ];
+
+  console.log(
+    "🔐 User checking action:",
+    action,
+    "Allowed:",
+    allowed.includes(action)
+  );
 
   if (allowed.includes(action)) {
-    return { success: true }
+    return { success: true };
   }
 
   return {
     success: false,
     message: `Permission denied for '${action}'`,
     error: "INSUFFICIENT_PERMISSIONS",
-  }
+  };
 }
