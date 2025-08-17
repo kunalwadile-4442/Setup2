@@ -287,6 +287,8 @@
                         <button onclick="getAddress()" class="button">Get
                             Address</button>
                         <button onclick="updateAddress('68a213b9c4fb08a18d0701fc')" class="button">Update Address</button>
+                        <button onclick="createOrder()" class="button">Order Place</button>
+                        <button onclick="orderGet()" class="button">Get Order</button>
                        
                     </div>
                     <div id="userOutput" class="output"></div>
@@ -869,8 +871,46 @@
                 addToOutput('userOutput', `Get Address Response: ${JSON.stringify(response, null, 2)}`);
             });
         }
-   
-   
+
+        function createOrder() {
+        if (!socket) return alert("Not connected");
+
+        // 🛒 Payload we send
+        const orderData = {
+            shippingAddress: "68a21dd0ff30e06ef4ce9a02", // AddressId selected by user
+            paymentMethod: "COD", // Or "UPI" / "Card" / "Wallet"
+        };
+
+        console.log("📦 Sending Order Data:", orderData);
+
+        // 🔥 Emit to backend
+        socket.emit("order:create", { orderData }, (response) => {
+            console.log("🛒 Order Create Response:", response);
+
+            addToOutput(
+            "userOutput",
+            `🛒 Order Create Response: ${JSON.stringify(response, null, 2)}`
+            );
+
+            if (response.success) {
+            alert("✅ Order placed successfully!");
+            } else {
+            alert("❌ Order failed: " + response.message);
+            }
+        });
+
+        }
+
+        function orderGet() {
+        if (!socket) return alert("Not connected");
+        socket.emit("order:get", {}, (response) => {
+            console.log("🛒 Order Get Response:", response);
+            addToOutput(
+            "userOutput",
+            `🛒 Order Get Response: ${JSON.stringify(response, null, 2)}`
+            );
+        });
+        }
     </script>
     </body>
 </html>
