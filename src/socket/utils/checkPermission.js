@@ -42,7 +42,11 @@ function checkAdmin(action) {
     "cart:read",
     "cart:create",
     "cart:update",
-    "cart:delete",
+    "cart:remove",
+    "cart:removeItem",
+
+    "wishlist:read",
+
   ]
 
   console.log("🔐 Admin checking action:", action, "Allowed:", allowed.includes(action))
@@ -68,7 +72,14 @@ function checkUser(action) {
     "cart:read",
     "cart:create",
     "cart:update",
-    "cart:delete",
+    "cart:remove",
+    "cart:removeItem",
+
+    "wishlist:read",
+    "wishlist:toggle",
+    "wishlist:clear",
+
+    
   ]
 
   console.log("🔐 User checking action:", action, "Allowed:", allowed.includes(action))

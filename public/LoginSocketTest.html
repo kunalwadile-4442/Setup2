@@ -250,7 +250,13 @@
                 <button onclick="getProductsUser()" class="button">Get Products</button>
                 <button onclick="addToCart()" class="button">Add/Update Cart</button>
                 <button onclick="getCart()" class="button">Get Cart</button>
+                <button onclick="removeFromCart()" class="button">Remove Cart item</button>
+                <button onclick="clearCart()" class="button">Clear Cart</button>
                 <button onclick="getCategoryUser()" class="button">Get Categories</button>
+                <button onclick="getCategoryUser()" class="button">Get Categories</button>
+                <button onclick="toggleWishlist()" class="button">Toggle Wishlist</button>
+                <button onclick="getWishlist()" class="button">Get Wishlist</button>
+                <button onclick="clearWishlist()" class="button">Clear Wishlist</button>
             </div>
             <div id="userOutput" class="output"></div>
         </div>
@@ -703,7 +709,7 @@
             if (!socket) return alert('Not connected');
 
             const cartData = {
-                productId: "68a0d281d60b3609b5f03582",
+                productId: "68a0bebaf8d415b2fd321e80",
                 quantity: 1,
             }
             console.log("📦 Sending category Data :", cartData);
@@ -721,6 +727,47 @@
                 addToOutput('userOutput', `Get Cart Response: ${JSON.stringify(response, null, 2)}`);
             });
         }
+
+        function removeFromCart() {
+            if (!socket) return alert('Not connected');
+            const productId = "68a0d281d60b3609b5f03582";
+            console.log("📦 Sending category Data :", productId);
+            socket.emit('cart:removeItem', { productId }, (response) => {
+                addToOutput('userOutput', `Remove from Cart Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+        
+        function clearCart() {
+            if (!socket) return alert('Not connected');
+            socket.emit('cart:remove', {}, (response) => {
+                addToOutput('userOutput', `Cart Clear Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+   
+        function toggleWishlist() {
+            if (!socket) return alert('Not connected');
+            const productId = "68a0d0fdd60b3609b5f0356d";
+            console.log("📦 Sending category Data :", productId);
+            socket.emit('wishlist:toggle', { productId }, (response) => {
+                addToOutput('userOutput', `Toggle Wishlist Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function getWishlist() {
+            if (!socket) return alert('Not connected');
+            socket.emit('wishlist:get',{}, (response) => {
+                addToOutput('userOutput', `Toggle Wishlist Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+
+        function clearWishlist() {
+            if (!socket) return alert('Not connected');
+            socket.emit('wishlist:clear',{}, (response) => {
+                addToOutput('userOutput', `Toggle Wishlist Response: ${JSON.stringify(response, null, 2)}`);
+            });
+        }
+   
+   
     </script>
     </body>
 </html>

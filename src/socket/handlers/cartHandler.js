@@ -1,5 +1,4 @@
-import Cart from "../../models/cart.model.js"
-import { aggregatePaginateHelper } from "../../utils/aggregatePaginateHelper.js";
+import Cart from "../../models/cart.model.js";
 import asyncHandler from "../../utils/asyncHandler.js";
 import { formatCart } from "../utils/cartFormat.js";
 import { checkPermission } from "../utils/checkPermission.js";
@@ -66,7 +65,7 @@ export const cartSocketHandlers = (socket, io) => {
     })
   );
 
-    socket.on("cart:get",
+  socket.on("cart:get",
     asyncHandler(async (_, callback) => {
       try {
         if (!socket.user) {
@@ -93,102 +92,94 @@ export const cartSocketHandlers = (socket, io) => {
   );
 
 
-//   socket.on("cart:update",
-//     asyncHandler(async (data, callback) => {
-//       try {
-//         if (!socket.user) {
-//           console.log("❌ No user found on socket");
-//           return sendError(callback, "User not authenticated", "NO_USER");
-//         }
+   socket.on(
+     "cart:removeItem",
+     asyncHandler(async (data, callback) => {
+       try {
+         if (!socket.user) {
+           return sendError(callback, "User not authenticated", "NO_USER");
+         }
+         const perm = await checkPermission(socket, "cart:removeItem");
+         if (!perm.success) {
+           return sendError(callback, perm.message, perm.error);
+         }
 
-//         const permission = await checkPermission(socket, "cart:update");
-//         if (!permission.success) {
-//           console.log("❌ Permission denied");
-//           return sendError(callback, permission.message, permission.error);
-//         }
-//         const { categoryId, categoryData } = data;
-//         const cart = await Cart.findById(categoryId);
+         const { productId } = data || {};
+         if (!productId) {
+           return sendError(
+             callback,
+             "Product ID is required",
+             "VALIDATION_ERROR"
+           );
+         }
 
-//         if (!cart) {
-//           console.log("❌ Cart not found");
-//           return sendError(callback, "Cart not found", "NOT_FOUND");
-//         }
+         let cart = await Cart.findOne({ user: socket.user._id }).populate(
+           "items.product"
+         );
 
-//         const { name, description } = categoryData;
+         if (!cart) {
+           return sendSuccess(callback, { cart: null }, "Cart is empty");
+         }
 
-//         if (!name || !description) {
-//           console.log("⚠️ Validation failed - missing required fields");
-//           return sendError(
-//             callback,
-//             "All required fields must be provided",
-//             "404"
-//           );
-//         }
+         const itemIndex = cart.items.findIndex(
+           (item) => item.product && item.product._id.toString() === productId
+         );
 
-//         cart.name = name;
-//         cart.description = description;
+         if (itemIndex === -1) {
+           return sendError(callback, "Item not found in cart", "NOT_FOUND");
+         }
 
-//         await cart.save();
+         cart.items.splice(itemIndex, 1);
+         await cart.save();
 
-//         console.log("✅ product updated successfully:", cart._id);
+         const cartResponse = formatCart(cart);
 
-//         // Broadcast to all connected clients that a cart was updated
-//         if (io) {
-//           io.emit("cart:updated", { cart });
-//         }
-//         return sendSuccess(
-//           callback,
-//           { cart },
-//           "Cart updated successfully"
-//         );
-//       } catch (error) {
-//         console.error("💥 Error in cart:update handler:", error);
-//         return sendError(callback, error.message, error.name);
-//       }
-//     })
-//   );
+         return sendSuccess(
+           callback,
+           { cart: cartResponse },
+           "Remove from Cart successfully"
+         );
+       } catch (error) {
+         console.error("💥 Error in :cart:removeItem", error);
+         return sendError(callback, error.message, error.name);
+       }
+     })
+   );
 
-//   socket.on("cart:delete",
-//     asyncHandler(async (data, callback) => {
-//       try {
-//         if (!socket.user) {
-//           console.log("❌ No user found on socket");
-//           return sendError(callback, "User not authenticated", "NO_USER");
-//         }
-
-//         const permission = await checkPermission(socket, "cart:delete");
-//         if (!permission.success) {
-//           console.log("❌ Permission denied");
-//           return sendError(callback, permission.message, permission.error);
-//         }
-
-//         const { categoryId } = data;
-//         const cart = await Cart.findById(categoryId);
-
-//         if (!cart) {
-//           console.log("❌ cart not found");
-//           return sendError(callback, "Cart not found", "NOT_FOUND");
-//         }
-
-//         await cart.deleteOne();
-
-//         console.log("✅ Cart deleted successfully:", cart._id);
-
-//         // Broadcast to all connected clients that a cart was deleted
-//         if (io) {
-//           io.emit("cart:deleted", { cart });
-//         }
-//         return sendSuccess(
-//           callback,
-//           { cart },
-//           "Cart deleted successfully"
-//         );
-//       } catch (error) {
-//         console.error("💥 Error in cart:delete handler:", error);
-//         return sendError(callback, error.message, error.name);
-//       }
-//     })
-//   );
+    socket.on(
+     "cart:remove",
+     asyncHandler(async (data, callback) => {
+       try {
+         if (!socket.user) {
+           return sendError(callback, "User not authenticated", "NO_USER");
+         }
+         const perm = await checkPermission(socket, "cart:remove");
+         if (!perm.success) {
+           return sendError(callback, perm.message, perm.error);
+         }
 
 
+         let cart = await Cart.findOne({ user: socket.user._id }).populate(
+           "items.product"
+         );
+
+         if (!cart) {
+           return sendSuccess(callback, { cart: null }, "Cart already empty");
+         }
+         cart.items = [];
+         await cart.save();
+
+         const cartResponse = formatCart(cart);
+
+         return sendSuccess(
+           callback,
+           { cart: cartResponse },
+           "Cart cleared successfully"
+         );
+       } catch (error) {
+         console.error("💥 Error in cart:remove", error);
+         return sendError(callback, error.message, error.name);
+       }
+     })
+   );
 };
