@@ -7,7 +7,6 @@ dotenv.config({
 })
 
 // Connect to MongoDB
-app.use(express.static(path.join(__dirname, "../public")));
 
 connectDB()
   .then(() => {
