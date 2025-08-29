@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import bcrypt from "bcrypt";
 import { User } from "./models/user.model.js";
-import { generateAccessAndRefreshTokens } from "./controllers/user.controller.js"; // ✅ Import common function
 
 dotenv.config();
 

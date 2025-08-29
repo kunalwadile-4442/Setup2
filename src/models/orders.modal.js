@@ -98,7 +98,6 @@ orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 
 // 📌 Optional: If you search by orderId frequently (like "ORD123")
-orderSchema.index({ _id: 1 });
 
 orderSchema.plugin(aggregatePaginate);
 

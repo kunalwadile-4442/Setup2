@@ -1,68 +1,85 @@
-import { checkPermission } from "../utils/checkPermission.js"
-import { sendSuccess, sendError } from "../utils/socketResponse.js"
+// handlers/userSocketHandlers.js
+import { User } from "../../models/user.model.js";
+import { checkPermission } from "../utils/checkPermission.js";
+import { SuccessSocketResponse, ErrorSocketResponse } from "../utils/stdScoketResponse.js";
 
 export const userSocketHandlers = (socket, io) => {
-  
-  // ✅ Get user profile
-  socket.on("user:getProfile", async (callback) => {
+  socket.on("action", async (req) => {
     try {
-      const hasPermission = await checkPermission(socket, "profile:read")
-      if (!hasPermission.success) {
-        return sendError(callback, new Error(hasPermission.message), 403)
+      if (req.type === "profile") {
+        const userId = socket.user._id;
+
+        // GET PROFILE
+        if (req.action === "getProfile") {
+          const hasPermission = await checkPermission(socket, "profile:read");
+          if (!hasPermission.success) {
+            return ErrorSocketResponse(socket, {
+              request: req,
+              msg: hasPermission.message,
+              statusCode: 403,
+            });
+          }
+
+          const user = socket.user;
+          return SuccessSocketResponse(socket, {
+            request: req,
+            msg: "Profile fetched successfully",
+            data: {
+              _id: user._id,
+              fullName: user.fullName,
+              email: user.email,
+              username: user.username,
+              profilePicture: user.profilePicture,
+              role: user.role,
+            },
+          });
+        }
+
+        // UPDATE PROFILE
+        if (req.action === "updateProfile") {
+          const hasPermission = await checkPermission(socket, "profile:write");
+          if (!hasPermission.success) {
+            return ErrorSocketResponse(socket, {
+              request: req,
+              msg: hasPermission.message,
+              statusCode: 403,
+            });
+          }
+
+          const payload = req.payload; // { fullName, email, username, profilePicture }
+
+          const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: payload },
+            { new: true }
+          ).lean();
+
+          if (!updatedUser) {
+            return ErrorSocketResponse(socket, {
+              request: req,
+              msg: "User not found",
+              statusCode: 404,
+            });
+          }
+
+          return SuccessSocketResponse(socket, {
+            request: req,
+            msg: "Profile updated successfully",
+            data: updatedUser,
+          });
+        }
+
+      
       }
 
-      const user = socket.user
-      return sendSuccess(callback, {
-        user: {
-          _id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          username: user.username,
-          profilePicture: user.profilePicture,
-          role: user.role,
-        },
-      }, "Profile fetched successfully")
+      // Unknown type
+     
     } catch (error) {
-      return sendError(callback, error, 500)
+      return ErrorSocketResponse(socket, {
+        request: req,
+        msg: error.message || "Internal Server Error",
+        statusCode: 500,
+      });
     }
-  })
-
-  // ✅ Update user status
-  // socket.on("user:updateStatus", async (data, callback) => {
-  //   try {
-  //     const hasPermission = await checkPermission(socket, "profile:write")
-  //     if (!hasPermission.success) {
-  //       return sendError(callback, new Error(hasPermission.message), 403)
-  //     }
-
-  //     socket.to("admin_room").emit("user:statusChanged", {
-  //       userId: socket.user._id,
-  //       username: socket.user.username,
-  //       status: data.status,
-  //       timestamp: new Date(),
-  //     })
-
-  //     return sendSuccess(callback, { status: data.status }, "Status updated successfully")
-  //   } catch (error) {
-  //     return sendError(callback, error, 500)
-  //   }
-  // })
-
-  // ✅ Real-time notifications
-  // socket.on("user:subscribe", (data, callback) => {
-  //   try {
-  //     const { channels } = data
-  //     if (!Array.isArray(channels) || channels.length === 0) {
-  //       return sendError(callback, new Error("Channels are required"), 400)
-  //     }
-
-  //     channels.forEach((channel) => {
-  //       socket.join(`notifications_${channel}`)
-  //     })
-
-  //     return sendSuccess(callback, { channels }, "Subscribed to notifications successfully")
-  //   } catch (error) {
-  //     return sendError(callback, error, 500)
-  //   }
-  // })
-}
+  });
+};

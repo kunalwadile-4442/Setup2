@@ -573,12 +573,32 @@
         }
 
         // User Actions
-        function getUserProfile() {
-            if (!socket) return alert('Not connected');
-            socket.emit('user:getProfile', (response) => {
-                addToOutput('userOutput', `Get Profile Response: ${JSON.stringify(response, null, 2)}`);
+       function getUserProfile() {
+            if (!socket) return alert("Not connected");
+
+            const req = {
+                type: "profile",
+                action: "getProfile",
+                payload: {}, // no payload needed for profile
+            };
+
+             socket.emit("action", req, (res) => {
+                if (res.success) {
+                console.log("✅ Profile fetched:", res.data.items[0]); 
+                addToOutput(
+                    "userOutput",
+                    `Get Profile Response: ${JSON.stringify(res, null, 2)}`
+                );
+                } else {
+                console.error("❌ Error:", res.message);
+                addToOutput(
+                    "userOutput",
+                    `Get Profile Error: ${JSON.stringify(res, null, 2)}`
+                );
+                }
             });
-        }
+            }
+
 
         function addProduct() {
             if (!socket) return alert('Not connected');

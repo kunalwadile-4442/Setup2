@@ -28,6 +28,7 @@ function checkAdmin(action) {
     "system:monitor",
     "profile:read",
     "profile:write",
+    "users:update",
 
     "product:read",
     "product:create",
